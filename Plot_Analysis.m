@@ -1,32 +1,44 @@
 %Script to show three plots results of the algorithm
-
+%close all
 %Input
-dir = 'D:\OneDrive\Universidad\Doctorado\Matlab\Results\'; %Directory where the data results are saved
+dir = 'D:\OneDrive\Universidad\Doctorado\Matlab\TERRA\Results\'; %Directory where the data results are saved
 it = 250; %Number of executions of the algorithm
 
 %Plot 2D Delta=2,4,8,16,32,64 ; R=2 ; N = 64
 files = {'DFF_1';'DFF_2';'DFF_3';'DFF_4';'DFF_5';'DFF_6'};
-Plot2D(dir,files,0);
+%Plot2D(dir,files,0);
 
 %ScatterGOA Delta=1 ; R=2,4,8,16 ; N = 6
 files = {'DRR_1';'DRR_2';'DRR_3';'DRR_4'};
-ScatterGOA(dir,files,it,10);
+%ScatterGOA(dir,files,it,10);
 
 %Distance Scatter R =1,3,9 ; Delta = 2,4,8
 files = {'SPP_9';'SPP_8';'SPP_7';'SPP_6';'SPP_5';'SPP_4';'SPP_3';'SPP_2';'SPP_1'};
-Scatter(dir,files,it,'d',1,10,false);
+%Scatter(dir,files,it,'d',1,10,false);
 
-%Test Anova Delta = 8
+%Test Anova Delta = 8 & R=9,3,1
 files = {'SPP_9';'SPP_6';'SPP_3'};
-Anova(dir,files,it);
+p_valor_lemma1 = Anova(dir,files,it);
 
-%Test Anova Delta = 4
+%Test Anova Delta = 4 & R=9,3,1
 files = {'SPP_8';'SPP_5';'SPP_2'};
-Anova(dir,files,it);
+p_valor_lemma1 = [p_valor_lemma1 Anova(dir,files,it)];
 
-%Test Anova Delta = 2
+%Test Anova Delta = 2 & R=9,3,1
 files = {'SPP_7';'SPP_4';'SPP_1'};
-Anova(dir,files,it);
+p_valor_lemma1 = [p_valor_lemma1 Anova(dir,files,it)];
+
+%Test Anova R = 9 & Delta=8,4,2
+files = {'SPP_9';'SPP_8';'SPP_7'};
+p_valor_lemma2 = Anova(dir,files,it);
+
+%Test Anova R = 3 & Delta=8,4,2
+files = {'SPP_6';'SPP_5';'SPP_4'};
+p_valor_lemma2 = [p_valor_lemma2 Anova(dir,files,it)];
+
+%Test Anova R = 1 & Delta=8,4,2
+files = {'SPP_3';'SPP_2';'SPP_1'};
+p_valor_lemma2 = [p_valor_lemma2 Anova(dir,files,it)];
 
 function [] = Scatter(dir,files,it,key,alg,scale,violin)
 
@@ -243,22 +255,32 @@ end
 
 function [p_valor] = Anova(dir,files,it)
 
-    y_anova = [];
-    
+    y_anova_total = [];
+    y_anova_ugv = [];
+    y_anova_uav = [];
+    p_valor = [];
     for k=1:length(files)
         total_distance = [];
+        ugv_distance = [];
+        uav_distance = [];
         %Load file
         f = [dir strjoin(files(k,1)) '\data.mat'];
         load(f);
         
         for i=1:it
            total_distance = [total_distance ; data_results(i).It(1).ftotal_d];
+           ugv_distance = [ugv_distance ; data_results(i).It(1).f_ugv_d];
+           uav_distance = [uav_distance ; data_results(i).It(1).f_uav_d];
         end
-        y_anova = [y_anova total_distance];
+        y_anova_total = [total_distance y_anova_total];
+        y_anova_ugv = [ugv_distance y_anova_ugv];
+        y_anova_uav = [uav_distance y_anova_uav];
     end
     
-    p_valor = anova1(y_anova);
-    fprintf('p_valor = %1.6f\n',p_valor);
+    p_valor = [p_valor anova1(y_anova_ugv,{'u1','u2','u3'},'off')];
+    p_valor = [p_valor ; anova1(y_anova_uav,{'u1','u2','u3'},'off')];
+    p_valor = [p_valor ; anova1(y_anova_total,{'u1','u2','u3'},'off')];
+    %fprintf('p_valor = %1.6f\n',p_valor);
 end
 
 function [] = Plot2D(dir,files,alg)
